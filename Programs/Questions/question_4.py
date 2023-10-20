@@ -2,42 +2,58 @@ import csv
 import matplotlib.pyplot as plt
 
 registration_dict = {}
-buissness_activity_dict = {}
+
 with open("../../Data/mca_maharashtra_21042018.csv", "r", encoding = "ISO-8859-1") as file:
 	company_data=csv.DictReader(file)
 	for row in company_data:
 		date=row["DATE_OF_REGISTRATION"].split("-")
 		try:
+
 			if int(date[2]) < 2018:
-				if date[2] in registration_dict:
-					registration_dict[date[2]] += 1
+				if int(date[2]) in registration_dict:
+					if row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"] in registration_dict[int(date[2])]:
+						registration_dict[int(date[2])][row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"]]+=1
+					else:
+						registration_dict[int(date[2])][row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"]]=1
 				else:
-					registration_dict[date[2]] = 1
-			if row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"] in buissness_activity_dict:
-				buissness_activity_dict[row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"]] += 1
-			else:
-				buissness_activity_dict[row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"]] = 1
+					registration_dict[int(date[2])]={}
+					registration_dict[int(date[2])][row["PRINCIPAL_BUSINESS_ACTIVITY_AS_PER_CIN"]]=1
 		except Exception:
 			pass
 
+# Sort the dictionary by the 'value' key in the inner dictionaries
+sorted_registration_dict = dict(sorted(registration_dict.items(), key=lambda item: max(item[1].values()),reverse=True))
 
 
-sorted_registration_dict = dict(sorted(registration_dict.items(), key = lambda item: item[1], reverse = True))
-sorted_buissness_activity_dict = dict(sorted(buissness_activity_dict.items(), key = lambda item: item[1], reverse = True))
+
+
 registration_year = list(sorted_registration_dict.keys())[:5]
-registration_count = list(sorted_registration_dict.values())[:5]
+activity_list=[]
+count_of_activity=[]
+for i in range(len(registration_year)):
+	activity_list.append(list(sorted_registration_dict[registration_year[i]].keys())[:5])
+	count_of_activity.append(list(sorted_registration_dict[registration_year[i]].values())[:5])
 
-buissness_activity = list(sorted_buissness_activity_dict.keys())[:5]
-buissness_activity_count = list(sorted_buissness_activity_dict.values())[:5]
-start_registration = [0.825, 1.825, 2.825, 3.825, 4.825]
-start_buissness = [1.175, 2.175, 3.175, 4.175, 5.175]
-plt.bar(start_registration, registration_count, 0.35, label = "group1")
-plt.bar(start_buissness, buissness_activity_count, 0.35, label = "group2")
-x_labels = registration_year + buissness_activity
-x_ticks = [0.825, 1.825, 2.825, 3.825, 4.825, 1.175, 2.175, 3.175, 4.175, 5.175]
-plt.xticks(x_ticks, x_labels, rotation = 270, ha = 'right')
-plt.ylabel(r"count $\longrightarrow$")
-plt.xlabel(r"Registration year, Buissness activity $\longrightarrow$")
-plt.title("Aggregating registration counts")
-plt.savefig("../Figures/question_4_fig.png", bbox_inches = "tight", pad_inches = 0.2)
+activity_list=activity_list[0]
+colors = ['red', 'green', 'blue', 'orange', 'purple']
+
+fig, ax = plt.subplots(figsize=(10,10))
+for i in range(5):
+	ax.bar(0,0,label=activity_list[i],color=colors[i])
+bar_offset=0
+bar_width=0.1
+for i in range(len(registration_year)):
+    for j in range(len(count_of_activity[i])):
+        bar = count_of_activity[i][j]
+        ax.bar(bar_offset, bar, width=bar_width,color=colors[j])
+        bar_offset+=bar_width
+    bar_offset+=bar_width*2
+bar_positions=[0.3,1,1.7,2.4,3.1]
+
+ax.set_title("Registration counts over year of registration principal Business Activity")
+ax.set_xlabel(r"Years $\longrightarrow$")
+ax.set_ylabel(r"Count $\longrightarrow$")
+ax.set_xticks(bar_positions,registration_year)
+plt.legend(loc=(0,0.80))
+plt.savefig("../Figures/question_4_fig.png",bbox_inches="tight",pad_inches=0.2)
 plt.show()
